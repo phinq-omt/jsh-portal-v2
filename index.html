@@ -5973,28 +5973,33 @@
             document.addEventListener('mouseup', handleMouseUp);
             
             function handleTouchStart(e) {
+                // Only handle swipe from swipe-indicator element
                 const swipeIndicator = e.target.closest('.swipe-indicator');
-                const modalContent = e.target.closest('.modal-content');
+                if (!swipeIndicator) return;
                 
+                const modalContent = swipeIndicator.closest('.modal-content');
                 if (!modalContent) return;
                 
-                // Only allow swipe from swipe-indicator or top area of modal
-                const isTopArea = e.touches[0].clientY - modalContent.getBoundingClientRect().top < 60;
+                // Check if modal is actually active/visible
+                const modalOverlay = modalContent.closest('.modal-overlay');
+                if (!modalOverlay || !modalOverlay.classList.contains('active')) return;
                 
-                if (swipeIndicator || isTopArea) {
-                    startDrag(e.touches[0].clientY, modalContent);
-                }
+                startDrag(e.touches[0].clientY, modalContent);
             }
             
             function handleMouseDown(e) {
                 const swipeIndicator = e.target.closest('.swipe-indicator');
                 if (!swipeIndicator) return;
                 
-                const modalContent = e.target.closest('.modal-content');
-                if (modalContent) {
-                    e.preventDefault();
-                    startDrag(e.clientY, modalContent);
-                }
+                const modalContent = swipeIndicator.closest('.modal-content');
+                if (!modalContent) return;
+                
+                // Check if modal is actually active/visible
+                const modalOverlay = modalContent.closest('.modal-overlay');
+                if (!modalOverlay || !modalOverlay.classList.contains('active')) return;
+                
+                e.preventDefault();
+                startDrag(e.clientY, modalContent);
             }
             
             function startDrag(y, modalContent) {
@@ -6010,12 +6015,13 @@
             }
             
             function handleTouchMove(e) {
+                // Only prevent default and handle move if we're actively dragging a modal
                 if (!isDragging || !currentModalContent) return;
                 
                 currentY = e.touches[0].clientY;
                 const deltaY = currentY - startY;
                 
-                // Only allow dragging down
+                // Only allow dragging down (positive deltaY)
                 if (deltaY > 0) {
                     e.preventDefault();
                     // Add resistance effect when dragging
@@ -6080,6 +6086,7 @@
                         if (modalToClose) {
                             modalToClose.classList.remove('active');
                             modalToClose.style.background = '';
+                            document.body.style.overflow = '';
                             const content = modalToClose.querySelector('.modal-content');
                             if (content) {
                                 content.style.transform = '';
