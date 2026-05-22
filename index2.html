@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ハノイ日本人学校 — 保護者ポータル</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            // Traditional Japanese School "Anshin" (Peace of Mind) Palette
+            jp: {
+              bg: '#F9FAFB',           // Clean, bright, trustworthy background
+              surface: '#FFFFFF',      // Paper white for structures
+              border: '#D2D6DC',       // Clear structural borders for high visibility
+              'border-dark': '#4A5568', // High-contrast crisp outlines
+              
+              // Educational Palette Accent Tokens
+              primary: '#1E4620',      // Deep Evergreen (Symbolizes school spirit, growth, and trust)
+              'primary-light': '#E8F5E9', // Soft tint for notifications
+              secondary: '#1A365D',    // Administrative Deep Blue
+              'secondary-light': '#EBF8FF',
+              accent: '#D97706',       // Amber warning states
+              'accent-light': '#FEF3C7',
+              danger: '#C53030',       // Clear alert red
+              'danger-light': '#FFF5F5',
+              
+              // High Contrast Typography Hierarchy
+              text: '#1A202C',         // Dark charcoal for pure legibility (avoids eye strain)
+              'text-muted': '#4A5568',   // Secondary body text
+              'text-light': '#718096'
+            },
+            // Legacy mapping for state consistency
+            graysp: '#E8F5E9',
+            tertiary: '#D97706',
+            error: '#C53030',
+            oblue: '#1A365D',
+            pblue: '#2B6CB0',
+            green: '#2F855A',
+            red: '#C53030'
+          },
+          fontFamily: {
+            sans: ['Noto Sans JP', '"Helvetica Neue"', 'Arial', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'sans-serif'],
+          }
+        },
+      },
+    };
+  </script>
+  
+  <style>
+    body {
+      letter-spacing: 0.03em;
+      line-height: 1.7;
+    }
+    
+    /* Strict accessibility focus outlines preferred in Japanese web systems */
+    button:focus-visible, a:focus-visible {
+      outline: 3px solid #D97706;
+      outline-offset: 2px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Clean structural flash highlights */
+    .card-highlight {
+      animation: jp-flash 1.5s ease-out;
+    }
+    @keyframes jp-flash {
+      0% { background-color: #FEF3C7; border-color: #D97706; }
+      100% { background-color: #FFFFFF; border-color: #D2D6DC; }
+    }
+
+    /* Core Visibility Conditional Controllers */
+    .logged-in-only { display: none; }
+    body.is-logged-in .logged-in-only { display: block; }
+    body.is-logged-in .logged-out-only { display: none; }
+    body.is-logged-in .logged-in-only-flex { display: flex; }
+    body.is-logged-in .logged-out-only-flex { display: none; }
+    .logged-in-only-flex { display: none; }
+    .logged-out-only-flex { display: flex; }
+
+    @media (max-width: 639px) {
+      main { padding-bottom: 7rem; }
+    }
+  </style>
+</head>
+
+<body class="bg-jp-bg text-jp-text font-sans flex flex-col justify-between min-h-screen">
+
+  <div class="bg-jp-secondary text-white text-xs border-b border-white/10 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2 font-medium">
+        <span class="inline-block w-2 h-2 rounded-full bg-green-400"></span>
+        <span>【検証環境】保護者確認ポータル システム画面</span>
+      </div>
+      <div class="flex items-center gap-1 bg-black/20 p-1 rounded border border-white/10">
+        <button type="button" id="btn-logged-out" class="px-2.5 py-1 rounded text-[11px] font-medium transition-colors" aria-pressed="true">未ログイン状態</button>
+        <button type="button" id="btn-logged-in" class="px-2.5 py-1 rounded text-[11px] font-medium transition-colors" aria-pressed="false">ログイン状態</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="bg-jp-surface border-b-2 border-jp-primary shadow-sm sticky top-[33px] z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 border-2 border-jp-primary rounded flex items-center justify-center text-jp-primary shrink-0 bg-jp-primary-light" aria-hidden="true">
+            <span class="text-xl font-bold tracking-tighter leading-none">学校</span>
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-jp-text flex items-center gap-2">
+              ハノイ日本人学校
+            </h1>
+            <p class="text-xs text-jp-text-muted font-medium mt-0.5">保護者オンライン各種申請・窓口システム</p>
+          </div>
+        </div>
+
+        <div class="flex items-center self-end sm:self-auto">
+          <a href="#login-banner" class="logged-out-only inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-primary text-white border border-jp-primary font-bold text-xs rounded hover:bg-emerald-800 transition-colors">
+            <span>▼ ログイン画面へ移動する</span>
+          </a>
+          
+          <div class="logged-in-only relative">
+            <button type="button" id="user-menu-btn" class="flex items-center gap-2 p-2 bg-jp-bg border border-jp-border rounded hover:bg-jp-border/30 transition-all text-xs font-medium" aria-expanded="false" aria-haspopup="true">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-600"></span>
+              <span>保護者氏名：<strong class="text-jp-text">山田 花子</strong> 様</span>
+              <span class="text-[10px] text-jp-text-light">▼</span>
+            </button>
+            
+            <div id="user-menu" class="hidden absolute right-0 mt-1.5 w-60 bg-jp-surface border-2 border-jp-border-dark rounded shadow-md p-2 z-50">
+              <div class="p-2 bg-jp-bg text-[11px] text-jp-text-muted border border-jp-border mb-1 rounded">
+                管理アカウント番号: <br><span class="font-mono text-jp-text font-bold">HNS-2026-9841</span>
+              </div>
+              <button type="button" class="w-full text-left px-3 py-2 text-jp-danger hover:bg-jp-danger-light rounded font-bold text-xs border border-transparent hover:border-jp-danger/30 transition-colors">
+                ▶ ログアウト (終了する)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <section class="bg-jp-surface border border-jp-border p-4 rounded space-y-2">
+      <h2 class="text-base font-bold text-jp-text border-l-4 border-jp-primary pl-2.5">
+        本オンライン窓口のご案内
+      </h2>
+      <p class="text-xs text-jp-text-muted leading-relaxed">
+        本サイトは、ハノイ日本人学校に在籍する児童生徒の保護者様専用の手続き受付窓口です。欠席・遅刻のご連絡、各種届出書類の提出、確認手続きを24時間いつでもオンラインで行うことができます。
+      </p>
+    </section>
+
+    <section id="login-banner" class="logged-out-only">
+      <div class="bg-jp-accent-light border-2 border-jp-accent rounded p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-bold text-jp-text flex items-center gap-1.5 text-amber-800">
+            【重要】マイページへのサインインをお願いいたします
+          </h3>
+          <p class="text-xs text-jp-text-muted leading-relaxed">
+            在校生向けのセキュリティ保護メニュー（欠席連絡、家庭環境情報の修正、一時帰国届など）を利用される場合は、あらかじめ学校に登録されているメールアドレスを用いてログイン認証を完了してください。
+          </p>
+        </div>
+        <div class="shrink-0 w-full md:w-auto">
+          <a href="#" class="inline-flex items-center justify-center gap-1 w-full md:w-auto px-5 py-2.5 bg-jp-secondary text-white font-bold text-xs border border-jp-secondary rounded hover:bg-blue-900 transition-colors shadow-sm">
+            <span>認証コードを発行・入力する</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="logged-in-only">
+      <div class="bg-jp-primary-light border-2 border-jp-primary rounded p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 bg-jp-primary text-white text-[11px] px-2 py-0.5 rounded font-bold tracking-wider shrink-0">確認済</div>
+          <div class="space-y-1">
+            <h3 class="text-xs text-jp-text-muted">
+              認証情報：<span class="text-sm font-bold text-jp-text">山田　花子 様（ご家族枠）</span>
+            </h3>
+            <div class="text-xs text-jp-text-muted flex flex-wrap gap-x-3 gap-y-1 items-center">
+              <span class="bg-jp-surface px-2 py-0.5 border border-jp-border rounded font-medium text-jp-text">👦 山田 太郎 （小学部3年1組）</span>
+              <span class="bg-jp-surface px-2 py-0.5 border border-jp-border rounded font-medium text-jp-text">👦 山田 次郎 （小学部1年2組）</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full md:w-auto shrink-0">
+          <a href="#service-leave" class="inline-flex items-center justify-center gap-1 w-full px-5 py-2.5 bg-jp-danger text-white font-bold text-xs border border-jp-danger rounded hover:bg-red-800 transition-colors shadow-sm">
+            <span>▶ 本日の欠席・遅刻連絡フォームへ</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="目的別インデックス" class="bg-jp-surface border border-jp-border p-3 rounded">
+      <div class="text-xs font-bold text-jp-text-muted mb-2 flex items-center gap-1">
+        <span>▼ 目的から探す（クリックで各項目へジャンプします）</span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="scenario-chip shrink-0 px-3 py-1.5 bg-jp-bg hover:bg-jp-border/20 border border-jp-border rounded text-xs font-bold text-jp-text transition-all" data-target="service-leave">
+          ⚫ 欠席・遅刻連絡
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-3 py-1.5 bg-jp-bg hover:bg-jp-border/20 border border-jp-border rounded text-xs font-bold text-jp-text transition-all" data-target="service-transfer">
+          ⚫ 新規編入学願書
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-3 py-1.5 bg-jp-bg hover:bg-jp-border/20 border border-jp-border rounded text-xs font-bold text-jp-text transition-all" data-target="service-family">
+          ⚫ 家庭環境調査票
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-3 py-1.5 bg-jp-bg hover:bg-jp-border/20 border border-jp-border rounded text-xs font-bold text-jp-text transition-all" data-target="service-temp">
+          ⚫ 一時帰国・体験通学
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-3 py-1.5 bg-jp-bg hover:bg-jp-border/20 border border-jp-border rounded text-xs font-bold text-jp-text transition-all" data-target="service-taigaku">
+          ⚫ 退学届提出
+        </button>
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <div class="text-xs font-bold text-jp-text-muted px-1 flex items-center gap-1">
+        <span>▼ 手続き・各種申請書メニュー一覧</span>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <article id="service-transfer" class="service-card bg-jp-surface border-2 border-jp-border rounded overflow-hidden flex flex-col justify-between scroll-mt-24 transition-all">
+          <div class="p-4 sm:p-5 space-y-3 flex-1">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h4 class="text-base font-bold text-jp-text tracking-tight flex items-center gap-1.5">
+                <span class="text-jp-primary font-mono text-lg">■</span> 編入学願書受付フォーム
+              </h4>
+              <span class="text-[10px] px-2 py-0.5 border border-jp-border-dark bg-jp-bg text-jp-text font-bold rounded">どなたでも可</span>
+            </div>
+            <p class="text-xs text-jp-text-muted leading-relaxed">
+              日本国内、または他国インターナショナルスクール等から本校へ新規転入・編入学を公式に希望される場合の事前申請窓口です。
+            </p>
+            <div class="bg-jp-bg border border-jp-border p-2.5 rounded text-[11px] text-jp-text-muted">
+              <strong class="text-jp-text block mb-0.5">※提出前の条件：</strong>学校事務局との事前相談ならびに受入可否枠の確認が完了している必要があります。
+            </div>
+          </div>
+          <div class="p-3 bg-jp-bg border-t border-jp-border flex justify-end">
+            <a href="#" class="inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-primary text-white border border-jp-primary font-bold text-xs rounded hover:bg-emerald-800 transition-colors w-full sm:w-auto text-center">
+              <span>このフォームの入力画面へ ＞</span>
+            </a>
+          </div>
+        </article>
+
+        <article id="service-family" class="service-card bg-jp-surface border-2 border-jp-border rounded overflow-hidden flex flex-col justify-between scroll-mt-24 transition-all">
+          <div class="p-4 sm:p-5 space-y-3 flex-1">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h4 class="text-base font-bold text-jp-text tracking-tight flex items-center gap-1.5">
+                <span class="text-jp-secondary font-mono text-lg">■</span> 家庭環境調査票
+              </h4>
+              <span class="text-[10px] px-2 py-0.5 bg-jp-accent-light text-jp-accent border border-jp-accent/30 font-bold rounded">認証必須</span>
+            </div>
+            <p class="text-xs text-jp-text-muted leading-relaxed">
+              緊急時の緊急連絡先、現住所、スクールバス利用ルート等の重要基礎データをオンライン経由で最新状態へ修正・申告するための書類です。
+            </p>
+            <div class="bg-jp-bg border border-jp-border p-2.5 rounded text-[11px] text-jp-text-muted">
+              <strong class="text-jp-text block mb-0.5">主な更新タイミング：</strong>毎年度初めの定期更新時、または市内での転居の際。
+            </div>
+          </div>
+          <div class="p-3 bg-jp-bg border-t border-jp-border flex justify-end">
+            <div class="logged-out-only w-full">
+              <button type="button" disabled class="w-full text-center px-4 py-2 bg-jp-border border border-jp-border text-jp-text-light font-medium text-xs rounded cursor-not-allowed">
+                🔒 サインイン後に選択いただけます
+              </button>
+            </div>
+            <div class="logged-in-only w-full sm:w-auto">
+              <a href="#" class="inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-surface border border-jp-border-dark text-jp-text font-bold text-xs rounded hover:bg-jp-bg transition-colors w-full text-center">
+                <span>登録内容を確認・変更する ＞</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-leave" class="service-card bg-jp-surface border-2 border-jp-border rounded overflow-hidden flex flex-col justify-between scroll-mt-24 transition-all">
+          <div class="p-4 sm:p-5 space-y-3 flex-1">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h4 class="text-base font-bold text-jp-text tracking-tight flex items-center gap-1.5">
+                <span class="text-jp-danger font-mono text-lg">■</span> 遅刻・欠席・早退連絡
+              </h4>
+              <span class="text-[10px] px-2 py-0.5 bg-jp-accent-light text-jp-accent border border-jp-accent/30 font-bold rounded">認証必須</span>
+            </div>
+            <p class="text-xs text-jp-text-muted leading-relaxed">
+              当日の急な体調不良や怪我、登校トラブルによる欠席や遅刻の連絡を、オンラインで直接学級担任へ通知します。
+            </p>
+            <div class="bg-jp-danger-light border border-jp-danger/30 p-2.5 rounded text-[11px] text-jp-danger font-bold">
+              ※当日の朝 8:05 を過ぎる変更は、必ず事務局窓口へ直接お電話でご連絡ください。
+            </div>
+          </div>
+          <div class="p-3 bg-jp-bg border-t border-jp-border flex justify-end">
+            <div class="logged-out-only w-full">
+              <button type="button" disabled class="w-full text-center px-4 py-2 bg-jp-border border border-jp-border text-jp-text-light font-medium text-xs rounded cursor-not-allowed">
+                🔒 サインイン後に選択いただけます
+              </button>
+            </div>
+            <div class="logged-in-only w-full sm:w-auto">
+              <a href="#" class="inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-danger text-white border border-jp-danger font-bold text-xs rounded hover:bg-red-800 transition-colors w-full text-center">
+                <span>当日の新規連絡を行う ＞</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-temp" class="service-card bg-jp-surface border-2 border-jp-border rounded overflow-hidden flex flex-col justify-between scroll-mt-24 transition-all">
+          <div class="p-4 sm:p-5 space-y-3 flex-1">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h4 class="text-base font-bold text-jp-text tracking-tight flex items-center gap-1.5">
+                <span class="text-teal-700 font-mono text-lg">■</span> 一時帰国・体験通学届
+              </h4>
+              <span class="text-[10px] px-2 py-0.5 bg-jp-accent-light text-jp-accent border border-jp-accent/30 font-bold rounded">認証必須</span>
+            </div>
+            <p class="text-xs text-jp-text-muted leading-relaxed">
+              日本への一時帰国休暇中に、日本国内の市区町村立小中学校へ一時的に体験入学を希望・実施する場合に提出する通知届です。
+            </p>
+            <div class="bg-jp-bg border border-jp-border p-2.5 rounded text-[11px] text-jp-text-muted">
+              学校側での各種書類作成（在籍証明等）が必要な場合は、余裕を持って提出をお願いします。
+            </div>
+          </div>
+          <div class="p-3 bg-jp-bg border-t border-jp-border flex justify-end">
+            <div class="logged-out-only w-full">
+              <button type="button" disabled class="w-full text-center px-4 py-2 bg-jp-border border border-jp-border text-jp-text-light font-medium text-xs rounded cursor-not-allowed">
+                🔒 サインイン後に選択いただけます
+              </button>
+            </div>
+            <div class="logged-in-only w-full sm:w-auto">
+              <a href="#" class="inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-surface border border-jp-border-dark text-jp-text font-bold text-xs rounded hover:bg-jp-bg transition-colors w-full text-center">
+                <span>体験通学届を作成する ＞</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-taigaku" class="service-card bg-jp-surface border-2 border-jp-border rounded overflow-hidden flex flex-col justify-between scroll-mt-24 transition-all md:col-span-2">
+          <div class="p-4 sm:p-5 space-y-3 flex-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-0">
+            <div class="sm:col-span-2 space-y-2">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <h4 class="text-base font-bold text-jp-text tracking-tight flex items-center gap-1.5">
+                  <span class="text-jp-text-muted font-mono text-lg">■</span> 転出・退学届の提出
+                </h4>
+                <span class="text-[10px] px-2 py-0.5 bg-jp-accent-light text-jp-accent border border-jp-accent/30 font-bold rounded md:hidden">認証必須</span>
+              </div>
+              <p class="text-xs text-jp-text-muted leading-relaxed">
+                保護者の本国帰任、異動に伴う転居等により、本校を転出・退学される際に必要となる公式手続き様式です。転出関係書類の事前準備を開始いたします。
+              </p>
+            </div>
+            <div class="flex flex-col justify-center">
+              <div class="bg-jp-bg border border-jp-border p-2.5 rounded text-[11px] text-jp-text-muted">
+                <strong>ご案内：</strong>転出確定日、ならびに転出先学校名が決まりましたら速やかに本システムよりご入力をお願いいたします。
+              </div>
+            </div>
+          </div>
+          <div class="p-3 bg-jp-bg border-t border-jp-border flex justify-end">
+            <div class="logged-out-only w-full">
+              <button type="button" disabled class="w-full text-center px-4 py-2 bg-jp-border border border-jp-border text-jp-text-light font-medium text-xs rounded cursor-not-allowed">
+                🔒 サインイン後に選択いただけます
+              </button>
+            </div>
+            <div class="logged-in-only w-full sm:w-auto">
+              <a href="#" class="inline-flex items-center justify-center gap-1 px-4 py-2 bg-jp-surface border border-jp-border-dark text-jp-text font-bold text-xs rounded hover:bg-jp-bg transition-colors w-full text-center">
+                <span>転出・退学手続きを開始する ＞</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="logged-in-only space-y-6">
+
+      <section class="bg-jp-surface border-2 border-jp-border p-4 sm:p-5 rounded space-y-4" aria-labelledby="history-heading">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-jp-border pb-3">
+          <div>
+            <h3 id="history-heading" class="text-sm font-bold text-jp-text flex items-center gap-1.5">
+              📁 欠席・遅刻・早退 連絡受付履歴一覧
+            </h3>
+            <p class="text-[11px] text-jp-text-light mt-0.5">※過去に入力された直近のデータが表示されています。</p>
+          </div>
+          
+          <div class="flex items-center bg-jp-bg border border-jp-border rounded p-1 self-start sm:self-auto">
+            <button type="button" id="month-prev" class="w-7 h-7 border border-jp-border rounded bg-jp-surface hover:bg-jp-bg text-jp-text font-bold text-xs flex items-center justify-center" aria-label="前の月">＜</button>
+            <div class="px-3">
+              <select id="month-select" class="bg-transparent text-xs font-bold text-jp-text focus:outline-none cursor-pointer appearance-none pr-4 relative" aria-label="表示対象月">
+                <option value="2026-05">2026年 5月度</option>
+                <option value="2026-04">2026年 4月度</option>
+                <option value="2026-03">2026年 3月度</option>
+              </select>
+            </div>
+            <button type="button" id="month-next" class="w-7 h-7 border border-jp-border rounded bg-jp-surface hover:bg-jp-bg text-jp-text font-bold text-xs flex items-center justify-center" aria-label="次の月">＞</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5" role="tablist" aria-label="児童生徒別絞り込み">
+          <button type="button" class="student-tab px-4 py-1 border rounded text-xs font-bold transition-all" data-student="all">すべて表示</button>
+          <button type="button" class="student-tab px-4 py-1 border rounded text-xs font-bold transition-all" data-student="tarou">山田 太郎 (小3)</button>
+          <button type="button" class="student-tab px-4 py-1 border rounded text-xs font-bold transition-all" data-student="jirou">山田 次郎 (小1)</button>
+        </div>
+
+        <div class="border border-jp-border rounded overflow-hidden">
+          
+          <div class="leave-item p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-jp-border bg-jp-surface hover:bg-jp-bg/30 transition-colors" data-student="tarou">
+            <div class="space-y-1">
+              <div class="text-[11px] font-bold text-jp-text-muted font-mono">対象日：2026年5月19日（月）</div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-jp-text">小学部3年 / 山田 太郎</span>
+                <span class="text-[10px] px-1.5 py-0.2 border-2 border-jp-danger bg-jp-danger-light text-jp-danger font-bold rounded">欠席</span>
+              </div>
+              <p class="text-xs text-jp-text-muted">【理由】朝から38度台の発熱、カゼ症状が見られるため自宅で静養させます。</p>
+            </div>
+            <button type="button" class="px-4 py-1.5 bg-jp-bg hover:bg-jp-border/40 border border-jp-border text-xs font-bold text-jp-text rounded transition-colors w-full sm:w-auto text-center">
+              内容の詳細確認
+            </button>
+          </div>
+          
+          <div class="leave-item p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-jp-surface hover:bg-jp-bg/30 transition-colors" data-student="jirou">
+            <div class="space-y-1">
+              <div class="text-[11px] font-bold text-jp-danger flex items-center gap-1.5 font-mono">
+                対象日：2026年5月20日（水） <span class="bg-jp-danger text-white text-[9px] px-1.5 rounded font-bold">本日対象</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-jp-text">小学部1年 / 山田 次郎</span>
+                <span class="text-[10px] px-1.5 py-0.2 border-2 border-jp-accent bg-jp-accent-light text-jp-accent font-bold rounded">遅刻</span>
+              </div>
+              <p class="text-xs text-jp-text-muted">【理由】午前中に歯科医院受診の後、2校時目（9:00頃）を目安に保護者付き添いの上で登校させます。</p>
+            </div>
+            <button type="button" class="px-4 py-1.5 bg-jp-bg hover:bg-jp-border/40 border border-jp-border text-xs font-bold text-jp-text rounded transition-colors w-full sm:w-auto text-center">
+              内容の詳細確認
+            </button>
+          </div>
+          
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <section class="bg-jp-surface border-2 border-jp-border p-4 rounded space-y-3">
+          <div class="flex items-center justify-between border-b border-jp-border pb-2 flex-wrap gap-2">
+            <h3 class="text-xs font-bold text-jp-text-muted uppercase">
+              ✈️ 一時帰国・体験通学申請履歴
+            </h3>
+            <a href="#" class="text-xs font-bold text-jp-pblue hover:underline">▶ 新規申請書作成</a>
+          </div>
+          
+          <div class="w-full p-4 bg-jp-bg border border-jp-border rounded flex flex-col gap-2.5">
+            <div class="flex items-center justify-between w-full border-b border-jp-border pb-1.5">
+              <span class="text-xs font-bold text-jp-text">対象児童：山田 太郎</span>
+              <span class="text-[10px] px-2 py-0.5 font-bold border border-jp-accent bg-jp-accent-light text-jp-accent rounded">学校審査中</span>
+            </div>
+            <table class="w-full text-xs text-jp-text-muted border-collapse">
+              <tbody>
+                <tr><th class="text-left font-medium py-0.5 w-24">申請受付日</th><td class="text-jp-text font-mono">2026/05/10</td></tr>
+                <tr><th class="text-left font-medium py-0.5">体験期間</th><td class="text-jp-text font-bold">07/01 〜 08/15</td></tr>
+                <tr><th class="text-left font-medium py-0.5">受入希望校</th><td class="text-jp-text">東京都内 公立小学校</td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="modal-trigger w-full mt-1 text-center px-3 py-1.5 bg-jp-surface border border-jp-border-dark text-jp-text hover:bg-jp-bg font-bold text-xs rounded transition-colors" data-modal="modal-temp">
+              申請書データを表示・印刷する
+            </button>
+          </div>
+        </section>
+
+        <section class="bg-jp-surface border-2 border-jp-border p-4 rounded space-y-3">
+          <div class="flex items-center justify-between border-b border-jp-border pb-2 flex-wrap gap-2">
+            <h3 class="text-xs font-bold text-jp-text-muted uppercase">
+              📋 転出・退学届の提出履歴
+            </h3>
+            <a href="#" class="text-xs font-bold text-jp-pblue hover:underline">▶ 新規届出作成</a>
+          </div>
+          
+          <div class="w-full p-4 bg-jp-bg border border-jp-border rounded flex flex-col gap-2.5">
+            <div class="flex items-center justify-between w-full border-b border-jp-border pb-1.5">
+              <span class="text-xs font-bold text-jp-text">対象児童：山田 次郎</span>
+              <span class="text-[10px] px-2 py-0.5 font-bold border border-jp-primary bg-jp-primary-light text-jp-primary rounded">事務局受理</span>
+            </div>
+            <table class="w-full text-xs text-jp-text-muted border-collapse">
+              <tbody>
+                <tr><th class="text-left font-medium py-0.5 w-24">手続受付日</th><td class="text-jp-text font-mono">2026/05/15</td></tr>
+                <tr><th class="text-left font-medium py-0.5">最終登校日</th><td class="text-jp-danger font-bold font-mono">2026/06/30</td></tr>
+                <tr><th class="text-left font-medium py-0.5">転出の事由</th><td class="text-jp-text">保護者本国帰任命令による</td></tr>
+              </tbody>
+            </table>
+            <button type="button" class="modal-trigger w-full mt-1 text-center px-3 py-1.5 bg-jp-surface border border-jp-border-dark text-jp-text hover:bg-jp-bg font-bold text-xs rounded transition-colors" data-modal="modal-taigaku">
+              受理状況・手続控えを表示
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <section class="bg-jp-surface border-2 border-jp-border p-4 sm:p-5 rounded space-y-3" aria-labelledby="club-heading">
+        <div class="border-b border-jp-border pb-2">
+          <h3 id="club-heading" class="text-sm font-bold text-jp-text flex items-center gap-1.5">
+            🏀 アフタースクール・所属クラブ活動登録状況
+          </h3>
+        </div>
+        <p class="text-xs text-jp-text-muted">本校放課後クラブ活動の現在の所属データです。家庭環境情報の追加等に伴う新規加入や変更申請は、各詳細リンク画面より個別にお手続きをお願いいたします。</p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="flex items-center justify-between p-3.5 bg-jp-bg border border-jp-border rounded">
+            <div class="space-y-0.5">
+              <span class="font-bold text-jp-text text-sm block">サッカー部（小学部）</span>
+              <span class="text-[11px] text-jp-text-light block">活動日時：毎週火曜日・木曜日 放課後</span>
+            </div>
+            <a href="#" class="px-3 py-1 bg-jp-surface border border-jp-border hover:bg-jp-bg text-xs font-bold text-jp-text rounded transition-colors shrink-0">詳細確認</a>
+          </div>
+          
+          <div class="flex items-center justify-between p-3.5 bg-jp-bg border border-jp-border rounded">
+            <div class="space-y-0.5">
+              <span class="font-bold text-jp-text text-sm block">書道・習字クラブ</span>
+              <span class="text-[11px] text-jp-text-light block">活動日時：毎週金曜日 放課後指導</span>
+            </div>
+            <a href="#" class="px-3 py-1 bg-jp-surface border border-jp-border hover:bg-jp-bg text-xs font-bold text-jp-text rounded transition-colors shrink-0">詳細確認</a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <section class="space-y-3 pt-2" aria-labelledby="faq-heading">
+      <div class="text-xs font-bold text-jp-text-muted px-1 flex items-center gap-1">
+        <span>▼ よくあるご質問と回答（ヘルプ）</span>
+      </div>
+      <div class="border border-jp-border bg-jp-surface rounded overflow-hidden">
+        
+        <details class="faq-item group border-b border-jp-border last:border-none">
+          <summary class="px-4 py-3.5 cursor-pointer font-bold text-jp-text text-xs sm:text-sm list-none flex items-center justify-between gap-4 hover:bg-jp-bg/60 transition-colors focus:outline-none">
+            <span>質問：システムへのログイン方法・コードが届かない場合について</span>
+            <span class="text-jp-text-light group-open:rotate-180 transition-transform font-mono text-xs">▼</span>
+          </summary>
+          <div class="px-4 pb-4 text-xs sm:text-sm text-jp-text-muted leading-relaxed border-t border-jp-border pt-3 bg-jp-bg/30">
+            お手数ですが、事前に学校へ提出・登録されている連絡用メールアドレスをご入力ください。システムより、ワンタイム確認用コード（6桁）が自動送信されます。もしコード通知が届かない場合は、迷惑メールフィルタの設定、またはドメイン指定受信設定をご確認いただくか、事務局へ登録アドレスの確認をご依頼ください。
+          </div>
+        </details>
+
+        <details class="faq-item group border-b border-jp-border last:border-none">
+          <summary class="px-4 py-3.5 cursor-pointer font-bold text-jp-text text-xs sm:text-sm list-none flex items-center justify-between gap-4 hover:bg-jp-bg/60 transition-colors focus:outline-none">
+            <span>質問：当日の欠席や遅刻連絡は、何時まで本システムから送信できますか？</span>
+            <span class="text-jp-text-light group-open:rotate-180 transition-transform font-mono text-xs">▼</span>
+          </summary>
+          <div class="px-4 pb-4 text-xs sm:text-sm text-jp-text-muted leading-relaxed border-t border-jp-border pt-3 bg-jp-bg/30">
+            当日の朝 8:05 までオンラインシステムからの送信・変更、ならびに取消が可能です。これ以降の時間における急な予定変更やご連絡については、担任への直接の伝達漏れを防ぐため、システムでの送信を行わず、学校代表電話まで直接お電話でご連絡をお願いいたします。
+          </div>
+        </details>
+
+        <details class="faq-item group border-b border-jp-border last:border-none">
+          <summary class="px-4 py-3.5 cursor-pointer font-bold text-jp-text text-xs sm:text-sm list-none flex items-center justify-between gap-4 hover:bg-jp-bg/60 transition-colors focus:outline-none">
+            <span>質問：スクールバス（運行連絡システムアプリ）とのデータ自動連携はありますか？</span>
+            <span class="text-jp-text-light group-open:rotate-180 transition-transform font-mono text-xs">▼</span>
+          </summary>
+          <div class="px-4 pb-4 text-xs sm:text-sm text-jp-text-muted leading-relaxed border-t border-jp-border pt-3 bg-jp-bg/30">
+            いいえ、恐れ入りますが本保護者ポータルシステムとスクールバス運行管理システムは別構造となっており、データは自動連携されません。バス利用対象のお子様が欠席・遅刻等される場合は、本ポータルでの申請に加えて、必ずスクールバス専用アプリ側でも不乗車のご登録を別途行っていただきますようお願いいたします。
+          </div>
+        </details>
+
+        <details class="faq-item group border-b border-jp-border last:border-none">
+          <summary class="px-4 py-3.5 cursor-pointer font-bold text-jp-text text-xs sm:text-sm list-none flex items-center justify-between gap-4 hover:bg-jp-bg/60 transition-colors focus:outline-none">
+            <span>質問：サインインが必要な申請と、不要なメニューの違いは何ですか？</span>
+            <span class="text-jp-text-light group-open:rotate-180 transition-transform font-mono text-xs">▼</span>
+          </summary>
+          <div class="px-4 pb-4 text-xs sm:text-sm text-jp-text-muted leading-relaxed border-t border-jp-border pt-3 bg-jp-bg/30">
+            「編入学願書」は本校への入学を新規にご検討・希望されている外部の保護者様も利用されるため、事前のサインイン制限を設けておりません。一方、「欠席連絡」「家庭環境調査票」「体験通学届」など、在校生のプライバシーおよび学籍に直接関わる書類は、個人情報保護および成りすまし防止の観点から、ログインによる二段階認証を必須とさせていただいております。
+          </div>
+        </details>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-jp-surface border-t border-jp-border py-8 text-center mt-12">
+    <div class="max-w-6xl mx-auto px-4 text-xs text-jp-text-muted space-y-2">
+      <p class="font-bold text-jp-text">ハノイ日本人学校　学校事務局窓口</p>
+      <p class="text-[11px]">〒 H2 Street, BIG District, Hanoi, Vietnam</p>
+      <p class="text-[11px] text-jp-text-light pt-4 border-t border-jp-border max-w-xl mx-auto">
+        ※本画面は、ポータルサイトの機能配置ならびに操作性検証のための試作プロトタイプ画面です。実際の申請送信等の動作は行われません。
+      </p>
+    </div>
+  </footer>
+
+  <div class="fixed bottom-0 inset-x-0 z-40 sm:hidden bg-jp-surface border-t-2 border-jp-border-dark shadow-lg pb-safe">
+    <div class="grid grid-cols-2 gap-2 p-3">
+      
+      <a href="#service-leave" class="logged-in-only-flex items-center justify-center text-center p-2.5 bg-jp-danger text-white font-bold text-xs rounded border border-jp-danger">
+        ⚫ 欠席・遅刻の連絡
+      </a>
+      
+      <a href="#login-banner" class="logged-out-only-flex items-center justify-center text-center p-2.5 bg-jp-secondary text-white font-bold text-xs rounded border border-jp-secondary">
+        ▶ マイページログイン
+      </a>
+      
+      <a href="#service-transfer" class="items-center justify-center text-center p-2.5 bg-jp-bg border border-jp-border text-jp-text font-bold text-xs rounded flex">
+        ▶ 新規編入学願書
+      </a>
+    </div>
+  </div>
+
+  <div id="modal-temp" class="modal hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4 transition-all" role="dialog" aria-modal="true" aria-labelledby="modal-temp-title">
+    <div class="bg-jp-surface w-full max-w-lg border-2 border-jp-border-dark rounded shadow-xl flex flex-col max-h-[85dvh]">
+      <div class="flex items-center justify-between px-4 py-3 bg-jp-bg border-b border-jp-border">
+        <h4 id="modal-temp-title" class="font-bold text-jp-text text-sm">
+          【届出控え】一時帰国・体験通学届 詳細確認
+        </h4>
+        <button type="button" class="modal-close px-2 py-1 bg-jp-surface border border-jp-border text-xs font-bold hover:bg-jp-bg rounded">閉じる</button>
+      </div>
+      <div class="overflow-y-auto flex-1 p-4 space-y-3 text-xs sm:text-sm">
+        <div class="p-2.5 bg-jp-accent-light border border-jp-accent text-jp-text font-bold text-xs rounded flex justify-between items-center">
+          <span>現在の選考進捗：</span>
+          <span class="bg-jp-accent text-white px-2 py-0.5 rounded text-[10px]">学校側審査確認中</span>
+        </div>
+        <table class="w-full border-collapse border border-jp-border text-xs">
+          <tbody>
+            <tr class="border-b border-jp-border"><th class="w-28 bg-jp-bg p-2 text-left font-bold border-r border-jp-border">申請保護者</th><td class="p-2 font-medium text-jp-text">山田　花子</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">対象児童</th><td class="p-2 font-medium text-jp-text">山田 太郎 (小学部3年)</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">システム受付日時</th><td class="p-2 font-mono text-jp-text-muted">2026年5月10日 14:22</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">通学希望期間</th><td class="p-2 font-bold text-jp-primary">2026/07/01 〜 2026/08/15</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">受入希望体験校</th><td class="p-2 text-jp-text">東京都内 区立小学校</td></tr>
+          </tbody>
+        </table>
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-jp-text-muted block">■ 事由および補足情報理由:</span>
+          <div class="p-2.5 bg-jp-bg border border-jp-border rounded text-xs text-jp-text leading-relaxed">
+            夏季休業期間中の日本一時帰国スケジュールに合わせ、本期間中のみ日本現地の公立小学校への体験入学（通学）を希望するため、事前届出を提出いたします。
+          </div>
+        </div>
+      </div>
+      <div class="px-4 py-3 bg-jp-bg border-t border-jp-border flex justify-end">
+        <button type="button" class="modal-close px-4 py-1.5 bg-jp-surface border border-jp-border-dark hover:bg-jp-bg text-xs font-bold rounded">画面を閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-taigaku" class="modal hidden fixed inset-0 z-50 items-center justify-center bg-black/50 p-4 transition-all" role="dialog" aria-modal="true" aria-labelledby="modal-taigaku-title">
+    <div class="bg-jp-surface w-full max-w-lg border-2 border-jp-border-dark rounded shadow-xl flex flex-col max-h-[85dvh]">
+      <div class="flex items-center justify-between px-4 py-3 bg-jp-bg border-b border-jp-border">
+        <h4 id="modal-taigaku-title" class="font-bold text-jp-text text-sm">
+          【手続控え】転出・退学届 受理詳細確認
+        </h4>
+        <button type="button" class="modal-close px-2 py-1 bg-jp-surface border border-jp-border text-xs font-bold hover:bg-jp-bg rounded">閉じる</button>
+      </div>
+      <div class="overflow-y-auto flex-1 p-4 space-y-3 text-xs sm:text-sm">
+        <div class="p-2.5 bg-jp-primary-light border border-jp-primary text-jp-text font-bold text-xs rounded flex justify-between items-center">
+          <span>手続きステータス：</span>
+          <span class="bg-jp-primary text-white px-2 py-0.5 rounded text-[10px]">学校事務局にて受理完了</span>
+        </div>
+        <table class="w-full border-collapse border border-jp-border text-xs">
+          <tbody>
+            <tr class="border-b border-jp-border"><th class="w-28 bg-jp-bg p-2 text-left font-bold border-r border-jp-border">申請保護者</th><td class="p-2 font-medium text-jp-text">山田　花子</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">対象児童</th><td class="p-2 font-medium text-jp-text">山田 次郎 (小学部1年)</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">提出完了日時</th><td class="p-2 font-mono text-jp-text-muted">2026年5月15日 09:11</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">最終登校予定日</th><td class="p-2 font-bold text-jp-danger">2026年 6月30日（火）</td></tr>
+            <tr class="border-b border-jp-border"><th class="bg-jp-bg p-2 text-left font-bold border-r border-jp-border">転出先情報</th><td class="p-2 text-jp-text">日本国内 公立小学校へ転入予定</td></tr>
+          </tbody>
+        </table>
+        <div class="space-y-1">
+          <span class="text-xs font-bold text-jp-text-muted block">■ 転出理由の補足：</span>
+          <div class="p-2.5 bg-jp-bg border border-jp-border rounded text-xs text-jp-text leading-relaxed">
+            保護者の日本帰国ならびに国内異動命令の辞令に伴う退学・転出手続き。
+          </div>
+        </div>
+        <div class="p-3 bg-jp-danger-light border border-jp-danger text-jp-danger text-xs rounded font-bold leading-relaxed">
+          ※指導要録の送付や転出証明書等に関わる対面書類の受領時期は、別途学級担任よりご連絡いたします。
+        </div>
+      </div>
+      <div class="px-4 py-3 bg-jp-bg border-t border-jp-border flex justify-end">
+        <button type="button" class="modal-close px-4 py-1.5 bg-jp-surface border border-jp-border-dark hover:bg-jp-bg text-xs font-bold rounded">画面を閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const btnOut = document.getElementById('btn-logged-out');
+      const btnIn = document.getElementById('btn-logged-in');
+
+      function setLoginState(loggedIn) {
+        body.classList.toggle('is-logged-in', loggedIn);
+        btnOut.setAttribute('aria-pressed', String(!loggedIn));
+        btnIn.setAttribute('aria-pressed', String(loggedIn));
+        
+        if (!loggedIn) {
+          btnOut.className = "px-2.5 py-1 rounded text-[11px] font-bold border border-white/40 bg-white text-jp-secondary shadow-sm";
+          btnIn.className = "px-2.5 py-1 rounded text-[11px] font-medium text-white/80 hover:text-white hover:bg-white/10";
+        } else {
+          btnOut.className = "px-2.5 py-1 rounded text-[11px] font-medium text-white/80 hover:text-white hover:bg-white/10";
+          btnIn.className = "px-2.5 py-1 rounded text-[11px] font-bold border border-white/40 bg-white text-jp-secondary shadow-sm";
+        }
+      }
+
+      btnOut.addEventListener('click', () => setLoginState(false));
+      btnIn.addEventListener('click', () => setLoginState(true));
+      setLoginState(false); // Initial structural state fallback
+
+      // Header Popover Context Dropdown
+      const userMenuBtn = document.getElementById('user-menu-btn');
+      const userMenu = document.getElementById('user-menu');
+      if (userMenuBtn && userMenu) {
+        userMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = !userMenu.classList.contains('hidden');
+          userMenu.classList.toggle('hidden', open);
+          userMenuBtn.setAttribute('aria-expanded', String(!open));
+        });
+        document.addEventListener('click', () => {
+          userMenu.classList.add('hidden');
+          userMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      // Quick-Jump Indices Logic Block
+      document.querySelectorAll('.scenario-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const target = document.getElementById(chip.dataset.target);
+          if (!target) return;
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.classList.remove('card-highlight');
+          void target.offsetWidth; // Trigger DOM reflow structural engine refresh
+          target.classList.add('card-highlight');
+        });
+      });
+
+      // Filter Tabs for Ledger History
+      const leaveItems = document.querySelectorAll('.leave-item');
+      const tabGroup = document.querySelectorAll('.student-tab');
+      
+      function setTabActiveState(activeTab) {
+        tabGroup.forEach((t) => {
+          t.className = "student-tab px-4 py-1 bg-jp-surface border border-jp-border text-jp-text-muted hover:bg-jp-bg rounded text-xs font-bold transition-all";
+        });
+        activeTab.className = "student-tab px-4 py-1 bg-jp-primary border-2 border-jp-primary text-white rounded text-xs font-bold transition-all shadow-sm";
+      }
+
+      tabGroup.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          setTabActiveState(tab);
+          const student = tab.dataset.student;
+          leaveItems.forEach((item) => {
+            item.style.display = student === 'all' || item.dataset.student === student ? '' : 'none';
+          });
+        });
+      });
+      if(tabGroup.length > 0) setTabActiveState(tabGroup[0]);
+
+      // Month Selection Array Control Sync
+      const monthSelect = document.getElementById('month-select');
+      const monthPrev = document.getElementById('month-prev');
+      const monthNext = document.getElementById('month-next');
+      if (monthSelect && monthPrev && monthNext) {
+        monthPrev.addEventListener('click', () => {
+          if (monthSelect.selectedIndex < monthSelect.options.length - 1) {
+            monthSelect.selectedIndex += 1;
+          }
+        });
+        monthNext.addEventListener('click', () => {
+          if (monthSelect.selectedIndex > 0) {
+            monthSelect.selectedIndex -= 1;
+          }
+        });
+      }
+
+      // Popover Accessible Dialog Modals
+      document.querySelectorAll('.modal-trigger').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          const modal = document.getElementById(trigger.dataset.modal);
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      });
+
+      function closeModal(modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (!document.querySelector('.modal.flex')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      document.querySelectorAll('.modal').forEach((modal) => {
+        modal.querySelectorAll('.modal-close').forEach((btn) => {
+          btn.addEventListener('click', () => closeModal(modal));
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal(modal);
+        });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal.flex').forEach(closeModal);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
