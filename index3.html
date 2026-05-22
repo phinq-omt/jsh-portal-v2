@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ハノイ日本人学校 — 保護者ポータル（UXプロトタイプ）</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: '#F8FAFC',
+            surface: '#FFFFFF',
+            primary: {
+              DEFAULT: '#0F766E',
+              light: '#CCFBF1',
+              dark: '#115E59',
+              hover: '#14B8A6'
+            },
+            secondary: {
+              DEFAULT: '#0284C7',
+              light: '#E0F2FE',
+              dark: '#0369A1'
+            },
+            accent: {
+              DEFAULT: '#F59E0B',
+              light: '#FEF3C7',
+              dark: '#B45309'
+            },
+            danger: {
+              DEFAULT: '#EF4444',
+              light: '#FEE2E2',
+              dark: '#B91C1C'
+            },
+            slate: {
+              DEFAULT: '#475569',
+              light: '#F1F5F9',
+              dark: '#1E293B'
+            },
+            charcoal: '#1E293B',
+            // Preserving original configuration aliases for script/class safety
+            graysp: '#F1F5F9',
+            tertiary: '#F59E0B',
+            error: '#EF4444',
+            oblue: '#0369A1',
+            pblue: '#0284C7',
+            green: '#10B981',
+            red: '#EF4444'
+          },
+          fontFamily: {
+            sans: ['Noto Sans JP', 'Plus Jakarta Sans', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(50, 50, 93, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.02)',
+            'card': '0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 4px 12px -2px rgba(0, 0, 0, 0.01)',
+            'hover': '0 20px 40px -5px rgba(15, 118, 110, 0.08), 0 8px 20px -4px rgba(0, 0, 0, 0.03)'
+          }
+        },
+      },
+    };
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Noto Sans JP', 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Elegant scenario ribbon scrollbar */
+    .scenario-scroll::-webkit-scrollbar {
+      height: 5px;
+    }
+    .scenario-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scenario-scroll::-webkit-scrollbar-thumb {
+      background: #E2E8F0;
+      border-radius: 99px;
+    }
+    
+    /* Enhanced Interactive Card Pulse Animation */
+    .card-highlight {
+      animation: highlight-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes highlight-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03); }
+      30% { transform: scale(1.02); box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.3); }
+      70% { transform: scale(1.01); box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.1); }
+    }
+    
+    /* Visibility Switchers matching original mechanics */
+    .logged-in-only { display: none; }
+    body.is-logged-in .logged-in-only { display: block; }
+    body.is-logged-in .logged-out-only { display: none; }
+    body.is-logged-in .logged-in-only-flex { display: flex; }
+    body.is-logged-in .logged-out-only-flex { display: none; }
+    .logged-in-only-flex { display: none; }
+    .logged-out-only-flex { display: flex; }
+    
+    @media (max-width: 639px) {
+      main { padding-bottom: 6.5rem; }
+    }
+  </style>
+</head>
+
+<body class="bg-background min-h-screen text-charcoal antialiased flex flex-col justify-between">
+
+  <div class="sticky top-0 z-50 bg-slate-dark/95 backdrop-blur-md shadow-sm border-b border-white/10 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-white/80 text-xs font-semibold tracking-wider uppercase hidden sm:inline">UX Demo Sandbox</span>
+        <span class="text-white/50 text-xs hidden md:inline">| 表示切り替えでUIの変化を確認できます</span>
+      </div>
+      <div class="flex rounded-xl bg-white/5 p-1 border border-white/10" role="group" aria-label="ログイン状態の切替">
+        <button type="button" id="btn-logged-out" class="demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px]" aria-pressed="true">
+          <i class="fa-solid fa-lock-open mr-1.5 opacity-70"></i>未ログイン
+        </button>
+        <button type="button" id="btn-logged-in" class="demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px]" aria-pressed="false">
+          <i class="fa-solid fa-shield-solid fa-user-check mr-1.5 opacity-70"></i>ログイン済み
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/60 sticky top-[53px] z-40 transition-shadow duration-300 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      <div class="flex items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-primary to-primary-hover flex items-center justify-center text-white font-bold text-xl shadow-md shadow-primary/20" aria-hidden="true">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-dark">ハノイ日本人学校</h1>
+            <p class="text-xs sm:text-sm font-medium text-slate/80 mt-0.5">保護者専用ポータルポータル</p>
+          </div>
+        </div>
+
+        <div class="flex items-center">
+          <a href="#login-banner" class="logged-out-only inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark active:scale-[0.98] transition-all text-sm font-bold shadow-md shadow-primary/10 min-h-[44px] focus:ring-2 focus:ring-primary/40 focus:ring-offset-2">
+            <i class="fa-solid fa-right-to-bracket text-xs opacity-90"></i>
+            <span>ログイン</span>
+          </a>
+          
+          <div class="logged-in-only relative">
+            <button type="button" id="user-menu-btn" class="flex items-center gap-3 p-1.5 pr-3 rounded-xl hover:bg-slate-light transition-all focus:ring-2 focus:ring-primary/30" aria-expanded="false" aria-haspopup="true" aria-label="ユーザーメニュー">
+              <div class="relative">
+                <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                  <i class="fa-solid fa-circle-user text-xl"></i>
+                </div>
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+              </div>
+              <div class="text-left hidden sm:block">
+                <p class="text-xs text-slate font-medium">保護者ユーザー</p>
+                <p class="text-sm font-bold text-slate-dark max-w-[6rem] truncate">山田 花子</p>
+              </div>
+              <i class="fa-solid fa-chevron-down text-xs text-slate/60 ml-1"></i>
+            </button>
+            
+            <div id="user-menu" class="hidden absolute right-0 mt-3 w-64 bg-white border border-slate-200/80 rounded-2xl shadow-xl p-3 z-50 transform origin-top-right animate-fade-in">
+              <div class="px-3 py-2.5 border-b border-slate-100 mb-2">
+                <p class="text-xs text-slate font-medium">現在サインイン中</p>
+                <p class="text-base font-bold text-slate-dark mt-0.5">山田　花子</p>
+              </div>
+              <button type="button" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-danger-light hover:bg-danger text-danger hover:text-white rounded-xl transition-all duration-200 text-sm font-bold min-h-[44px]">
+                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                ログアウト
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
+
+    <section class="relative overflow-hidden bg-gradient-to-br from-slate-dark to-slate p-6 sm:p-8 rounded-3xl text-white shadow-lg">
+      <div class="absolute -right-10 -bottom-10 text-white/5 text-9xl pointer-events-none" aria-hidden="true">
+        <i class="fa-solid fa-school"></i>
+      </div>
+      <div class="max-w-2xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-semibold mb-3 tracking-wide">
+          <i class="fa-solid fa-circle-info text-accent"></i> オンライン窓口
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">学校手続きを、もっとシンプルに。</h2>
+        <p class="mt-2 text-white/80 leading-relaxed text-sm sm:text-base font-normal">
+          各種申請、欠席・遅刻連絡、各種届出を24時間いつでもオンラインで行えます。目的のメニューを選択するか、以下の手順に沿ってお進みください。
+        </p>
+      </div>
+    </section>
+
+    <section id="login-banner" class="logged-out-only">
+      <div class="bg-gradient-to-r from-primary/5 via-primary/10 to-transparent border border-primary/20 rounded-2xl p-5 sm:p-8 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="flex items-start gap-4 max-w-3xl">
+            <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary text-xl shrink-0 mt-1">
+              <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-dark">保護者用マイページにログイン</h3>
+              <p class="text-slate text-sm sm:text-base mt-1">
+                在校生の保護者様向けの機能（欠席連絡、家庭情報更新等）を利用するには、学校に登録されているメールアドレスでログインしてください。認証コードが即時送信されます。
+              </p>
+              <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate/70 font-medium">
+                <span><i class="fa-solid fa-circle-exclamation text-amber-500 mr-1"></i>学校登録アドレス限定</span>
+                <span><i class="fa-solid fa-envelope-open text-blue-500 mr-1"></i>迷惑メール設定にご注意</span>
+              </div>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <a href="#" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-all font-bold text-sm shadow-lg shadow-primary/20 min-h-[44px]">
+              <i class="fa-solid fa-key text-xs"></i>
+              認証コードを発行する
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="logged-in-only">
+      <div class="bg-white rounded-2xl shadow-soft border border-slate-200/60 p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 text-xl shrink-0">
+            <i class="fa-solid fa-address-card"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-bold uppercase tracking-wider">認証済</span>
+              <p class="text-lg font-bold text-slate-dark">山田　花子 <span class="text-sm font-normal text-slate">様</span></p>
+            </div>
+            <p class="text-xs sm:text-sm text-slate font-medium mt-1">
+              <i class="fa-solid fa-children text-slate/60 mr-1"></i>ご登録お子様：
+              <span class="bg-slate-light px-2 py-0.5 rounded-md mx-0.5 text-slate-dark font-semibold">山田 太郎（小3・1組）</span>
+              <span class="bg-slate-light px-2 py-0.5 rounded-md mx-0.5 text-slate-dark font-semibold">山田 次郎（小1・2組）</span>
+            </p>
+          </div>
+        </div>
+        <div class="w-full md:w-auto">
+          <a href="#service-leave" class="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-danger text-white rounded-xl hover:bg-danger-dark font-bold text-sm shadow-md shadow-danger/10 transition-all active:scale-[0.99] min-h-[44px]">
+            <i class="fa-regular fa-bell animate-bounce"></i>
+            <span>本日の欠席・遅刻連絡</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading" class="text-sm font-bold text-slate tracking-wider uppercase mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-wand-magic-sparkles text-primary"></i> 目的から選ぶショートカット
+      </h2>
+      <div class="scenario-scroll flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <button type="button" class="scenario-chip shrink-0 px-4 py-2.5 bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 rounded-xl text-sm font-bold text-slate-dark shadow-xs transition-all duration-200 flex items-center gap-2 min-h-[44px]" data-target="service-leave">
+          <span class="text-base text-danger">🕐</span> 欠席・遅刻連絡
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-4 py-2.5 bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 rounded-xl text-sm font-bold text-slate-dark shadow-xs transition-all duration-200 flex items-center gap-2 min-h-[44px]" data-target="service-transfer">
+          <span class="text-base text-secondary">📝</span> 入学・編入学申請
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-4 py-2.5 bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 rounded-xl text-sm font-bold text-slate-dark shadow-xs transition-all duration-200 flex items-center gap-2 min-h-[44px]" data-target="service-family">
+          <span class="text-base text-accent">👨‍👩‍👧</span> 家庭環境情報の変更
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-4 py-2.5 bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 rounded-xl text-sm font-bold text-slate-dark shadow-xs transition-all duration-200 flex items-center gap-2 min-h-[44px]" data-target="service-temp">
+          <span class="text-base text-teal-600">✈️</span> 一時帰国・体験通学
+        </button>
+        <button type="button" class="scenario-chip shrink-0 px-4 py-2.5 bg-white border border-slate-200 hover:border-primary hover:bg-primary/5 rounded-xl text-sm font-bold text-slate-dark shadow-xs transition-all duration-200 flex items-center gap-2 min-h-[44px]" data-target="service-taigaku">
+          <span class="text-base text-slate">📋</span> 退学届の提出
+        </button>
+      </div>
+    </section>
+
+    <section aria-labelledby="services-heading" class="space-y-4">
+      <h2 id="services-heading" class="text-xl font-bold text-slate-dark flex items-center gap-2">
+        <i class="fa-solid fa-folder-open text-primary/80"></i> 手続き・申請メニュー
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <article id="service-transfer" class="service-card bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-hover overflow-hidden flex flex-col scroll-mt-28 transition-all duration-300 transform hover:-translate-y-0.5">
+          <div class="bg-gradient-to-br from-secondary to-secondary-dark p-5 text-white relative">
+            <span class="absolute top-4 right-4 text-xs px-2 py-0.5 bg-white/20 border border-white/20 rounded-full font-medium">誰でも可</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg"><i class="fa-solid fa-passport"></i></div>
+              <div>
+                <h3 class="text-lg font-bold">編入学願書</h3>
+                <p class="text-xs text-white/80 mt-0.5">転校・新規編入に関するお手続き</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-5 flex flex-col flex-1 gap-4 justify-between bg-white">
+            <div class="space-y-2 text-sm text-slate">
+              <p class="bg-slate-light p-2.5 rounded-xl text-xs font-medium text-slate-dark">
+                <strong class="text-secondary-dark">対象ケース：</strong>他校から本校への転入、次年度の新規入学希望時など
+              </p>
+              <p class="leading-relaxed">事前の登録やログインは一切不要です。案内に従って必要事項を入力してください。</p>
+            </div>
+            <a href="#" class="group flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-secondary hover:bg-secondary-dark text-white rounded-xl transition-all font-bold text-sm min-h-[44px] mt-2">
+              <span>申請入力画面へ</span>
+              <i class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
+            </a>
+          </div>
+        </article>
+
+        <article id="service-family" class="service-card bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-hover overflow-hidden flex flex-col scroll-mt-28 transition-all duration-300 transform hover:-translate-y-0.5">
+          <div class="bg-gradient-to-br from-accent to-accent-dark p-5 text-white relative">
+            <span class="absolute top-4 right-4 text-xs px-2 py-0.5 bg-black/10 border border-white/20 rounded-full font-medium">要ログイン</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg"><i class="fa-solid fa-house-user"></i></div>
+              <div>
+                <h3 class="text-lg font-bold">家庭環境調査票</h3>
+                <p class="text-xs text-white/80 mt-0.5">ご家族情報の確認・更新</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-5 flex flex-col flex-1 gap-4 justify-between bg-white">
+            <div class="space-y-2 text-sm text-slate">
+              <p class="bg-slate-light p-2.5 rounded-xl text-xs font-medium text-slate-dark">
+                <strong class="text-accent-dark">対象ケース：</strong>住所、緊急連絡先、家族構成の変更、年次定期更新
+              </p>
+              <p class="leading-relaxed">常に最新の情報に更新をお願いいたします。データは安全に暗号化されて保存されます。</p>
+            </div>
+            
+            <div class="logged-out-only mt-2">
+              <button type="button" disabled class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-light text-slate/50 border border-slate-200 rounded-xl font-bold text-sm min-h-[44px] cursor-not-allowed">
+                <i class="fa-solid fa-lock text-xs"></i>
+                <span>ログイン後に利用可能</span>
+              </button>
+            </div>
+            <div class="logged-in-only mt-2">
+              <a href="#" class="group flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-accent hover:bg-accent-dark text-white rounded-xl transition-all font-bold text-sm min-h-[44px]">
+                <span>情報を変更する</span>
+                <i class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-leave" class="service-card bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-hover overflow-hidden flex flex-col scroll-mt-28 transition-all duration-300 transform hover:-translate-y-0.5">
+          <div class="bg-gradient-to-br from-danger to-danger-dark p-5 text-white relative">
+            <span class="absolute top-4 right-4 text-xs px-2 py-0.5 bg-black/10 border border-white/20 rounded-full font-medium">要ログイン</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg"><i class="fa-regular fa-clock"></i></div>
+              <div>
+                <h3 class="text-lg font-bold">遅刻・欠席・早退連絡</h3>
+                <p class="text-xs text-white/80 mt-0.5">当日の登校スケジュール変更連絡</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-5 flex flex-col flex-1 gap-4 justify-between bg-white">
+            <div class="space-y-2 text-sm text-slate">
+              <p class="bg-danger-light/50 p-2.5 rounded-xl text-xs font-bold text-danger-dark">
+                ⚠️ 受付期限：当日朝 8:05 まで
+              </p>
+              <p class="leading-relaxed">毎朝の急な体調不良やトラブル等の連絡をオンラインで行えます。期限以降は直接お電話ください。</p>
+            </div>
+            
+            <div class="logged-out-only mt-2">
+              <button type="button" disabled class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-light text-slate/50 border border-slate-200 rounded-xl font-bold text-sm min-h-[44px] cursor-not-allowed">
+                <i class="fa-solid fa-lock text-xs"></i>
+                <span>ログイン後に利用可能</span>
+              </button>
+            </div>
+            <div class="logged-in-only mt-2">
+              <a href="#" class="group flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-danger hover:bg-danger-dark text-white rounded-xl transition-all font-bold text-sm min-h-[44px]">
+                <span>連絡フォームを開く</span>
+                <i class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-temp" class="service-card bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-hover overflow-hidden flex flex-col scroll-mt-28 transition-all duration-300 transform hover:-translate-y-0.5">
+          <div class="bg-gradient-to-br from-teal-600 to-teal-800 p-5 text-white relative">
+            <span class="absolute top-4 right-4 text-xs px-2 py-0.5 bg-black/10 border border-white/20 rounded-full font-medium">要ログイン</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg"><i class="fa-solid fa-plane-departure"></i></div>
+              <div>
+                <h3 class="text-lg font-bold">体験通学届</h3>
+                <p class="text-xs text-white/80 mt-0.5">一時帰国時の体験通学に関する申請</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-5 flex flex-col flex-1 gap-4 justify-between bg-white">
+            <div class="space-y-2 text-sm text-slate">
+              <p class="bg-slate-light p-2.5 rounded-xl text-xs font-medium text-slate-dark">
+                <strong class="text-teal-700">対象ケース：</strong>日本への一時帰国に伴い、現地校へ体験入学させる場合
+              </p>
+              <p class="leading-relaxed">体験通学日程が決まりましたら、速やかにこちらから届出を行ってください。</p>
+            </div>
+            
+            <div class="logged-out-only mt-2">
+              <button type="button" disabled class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-light text-slate/50 border border-slate-200 rounded-xl font-bold text-sm min-h-[44px] cursor-not-allowed">
+                <i class="fa-solid fa-lock text-xs"></i>
+                <span>ログイン後に利用可能</span>
+              </button>
+            </div>
+            <div class="logged-in-only mt-2">
+              <a href="#" class="group flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition-all font-bold text-sm min-h-[44px]">
+                <span>届出書類を作成する</span>
+                <i class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <article id="service-taigaku" class="service-card bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-hover overflow-hidden flex flex-col scroll-mt-28 transition-all duration-300 transform hover:-translate-y-0.5 md:col-span-2 lg:col-span-1">
+          <div class="bg-gradient-to-br from-slate-600 to-slate-800 p-5 text-white relative">
+            <span class="absolute top-4 right-4 text-xs px-2 py-0.5 bg-black/10 border border-white/20 rounded-full font-medium">要ログイン</span>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-lg"><i class="fa-solid fa-user-minus"></i></div>
+              <div>
+                <h3 class="text-lg font-bold">退学届</h3>
+                <p class="text-xs text-white/80 mt-0.5">本校からの退学・転出のお手続き</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-5 flex flex-col flex-1 gap-4 justify-between bg-white">
+            <div class="space-y-2 text-sm text-slate">
+              <p class="bg-slate-light p-2.5 rounded-xl text-xs font-medium text-slate-dark">
+                <strong class="text-slate-700">対象ケース：</strong>日本への本帰国、または他都市へのスライド転校など
+              </p>
+              <p class="leading-relaxed">転出日が確定いたしましたら、必要情報を添えて速やかにご提出をお願いいたします。</p>
+            </div>
+            
+            <div class="logged-out-only mt-2">
+              <button type="button" disabled class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-light text-slate/50 border border-slate-200 rounded-xl font-bold text-sm min-h-[44px] cursor-not-allowed">
+                <i class="fa-solid fa-lock text-xs"></i>
+                <span>ログイン後に利用可能</span>
+              </button>
+            </div>
+            <div class="logged-in-only mt-2">
+              <a href="#" class="group flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-slate-600 hover:bg-slate-700 text-white rounded-xl transition-all font-bold text-sm min-h-[44px]">
+                <span>手続きを進める</span>
+                <i class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <div class="logged-in-only space-y-6 sm:space-y-8 animate-fade-in">
+
+      <section class="bg-white rounded-3xl border border-slate-200/80 shadow-soft p-5 sm:p-6" aria-labelledby="leave-history-heading">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-1.5 h-6 rounded-full bg-danger"></div>
+            <div>
+              <h2 id="leave-history-heading" class="text-lg font-bold text-slate-dark">遅刻・欠席・早退受付履歴</h2>
+              <p class="text-xs text-danger font-medium mt-0.5">※当日朝8:05分以降の変更は、学校事務局へ直接お電話でご連絡ください。</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center bg-slate-light p-1 rounded-xl border border-slate-200/40">
+            <button type="button" id="month-prev" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow-xs text-slate-dark transition-all flex items-center justify-center" aria-label="前の月">
+              <i class="fa-solid fa-chevron-left text-sm"></i>
+            </button>
+            <select id="month-select" class="px-3 bg-transparent text-sm font-bold text-slate-dark focus:outline-none cursor-pointer min-h-[36px]" aria-label="表示する月">
+              <option value="2026-05">2026年5月</option>
+              <option value="2026-04">2026年4月</option>
+              <option value="2026-03">2026年3月</option>
+            </select>
+            <button type="button" id="month-next" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow-xs text-slate-dark transition-all flex items-center justify-center" aria-label="次の月">
+              <i class="fa-solid fa-chevron-right text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button type="button" class="student-tab px-4 py-1.5 rounded-xl border text-xs font-bold tracking-wide shadow-2xs transition-all duration-200 min-h-[36px]" data-student="all">すべて</button>
+          <button type="button" class="student-tab px-4 py-1.5 rounded-xl border text-xs font-bold tracking-wide shadow-2xs transition-all duration-200 min-h-[36px]" data-student="tarou">山田 太郎</button>
+          <button type="button" class="student-tab px-4 py-1.5 rounded-xl border text-xs font-bold tracking-wide shadow-2xs transition-all duration-200 min-h-[36px]" data-student="jirou">山田 次郎</button>
+        </div>
+
+        <ul id="leave-list" class="space-y-2.5">
+          <li class="leave-item bg-slate-light/60 hover:bg-slate-light border border-slate-200/50 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all" data-student="tarou">
+            <div class="flex items-center gap-4">
+              <div class="hidden sm:flex w-10 h-10 rounded-xl bg-danger/10 text-danger items-center justify-center text-sm"><i class="fa-regular fa-calendar-minus"></i></div>
+              <div>
+                <time datetime="2026-05-19" class="text-xs font-semibold text-slate/80">2026/05/19（月）</time>
+                <div class="mt-1 flex flex-wrap items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-bold bg-danger/15 text-danger">欠席</span>
+                  <span class="text-sm font-bold text-slate-dark">山田 太郎</span>
+                  <span class="text-xs text-slate font-medium">（理由：発熱）</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="px-4 py-2 text-xs font-bold text-slate-dark bg-white border border-slate-200 hover:border-slate-300 rounded-xl shadow-2xs transition-all min-h-[38px] sm:w-auto w-full">
+              詳細を見る
+            </button>
+          </li>
+          
+          <li class="leave-item bg-amber-50/40 hover:bg-amber-50/80 border-2 border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all" data-student="jirou">
+            <div class="flex items-center gap-4">
+              <div class="hidden sm:flex w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 items-center justify-center text-sm"><i class="fa-regular fa-clock"></i></div>
+              <div>
+                <time datetime="2026-05-20" class="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                  2026/05/20（火） <span class="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">本日</span>
+                </time>
+                <div class="mt-1 flex flex-wrap items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-700">遅刻</span>
+                  <span class="text-sm font-bold text-slate-dark">山田 次郎</span>
+                  <span class="text-xs text-slate font-medium">（9:00頃登校予定）</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="px-4 py-2 text-xs font-bold text-slate-dark bg-white border border-slate-200 hover:border-slate-300 rounded-xl shadow-2xs transition-all min-h-[38px] sm:w-auto w-full">
+              詳細を見る
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <section class="bg-white rounded-3xl border border-slate-200/80 shadow-soft p-5 sm:p-6" aria-labelledby="temp-history-heading">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-1.5 h-6 rounded-full bg-teal-600"></div>
+              <h2 id="temp-history-heading" class="text-base font-bold text-slate-dark">体験通学届 提出履歴</h2>
+            </div>
+            <a href="#" class="inline-flex items-center gap-1.5 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold rounded-xl transition-all min-h-[38px]">
+              <i class="fa-solid fa-circle-plus"></i>新規申請
+            </a>
+          </div>
+          
+          <div class="space-y-2">
+            <button type="button" class="modal-trigger w-full text-left p-4 bg-slate-light/40 hover:bg-slate-light border border-slate-200/40 rounded-2xl transition-all flex flex-col gap-2 group min-h-[44px]" data-modal="modal-temp">
+              <div class="flex items-center justify-between w-full">
+                <span class="font-bold text-slate-dark text-sm group-hover:text-teal-700 transition-colors">山田 太郎</span>
+                <span class="px-2 py-0.5 text-[11px] font-bold bg-amber-500 text-white rounded">審査中</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate">
+                <span class="text-slate/60">申請日</span><span>2026/05/10（土）</span>
+                <span class="text-slate/60">対象期間</span><span class="font-medium text-slate-dark">07/01 〜 08/15</span>
+                <span class="text-slate/60">体験先</span><span>東京日本人学校</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section class="bg-white rounded-3xl border border-slate-200/80 shadow-soft p-5 sm:p-6" aria-labelledby="taigaku-history-heading">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-1.5 h-6 rounded-full bg-slate-600"></div>
+              <h2 id="taigaku-history-heading" class="text-base font-bold text-slate-dark">退学届 提出履歴</h2>
+            </div>
+            <a href="#" class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all min-h-[38px]">
+              <i class="fa-solid fa-circle-plus"></i>新規申請
+            </a>
+          </div>
+          
+          <div class="space-y-2">
+            <button type="button" class="modal-trigger w-full text-left p-4 bg-slate-light/40 hover:bg-slate-light border border-slate-200/40 rounded-2xl transition-all flex flex-col gap-2 group min-h-[44px]" data-modal="modal-taigaku">
+              <div class="flex items-center justify-between w-full">
+                <span class="font-bold text-slate-dark text-sm group-hover:text-slate-800 transition-colors">山田 次郎</span>
+                <span class="px-2 py-0.5 text-[11px] font-bold bg-secondary text-white rounded">未確認</span>
+              </div>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate">
+                <span class="text-slate/60">申請日</span><span>2026/05/15（木）</span>
+                <span class="text-slate/60">退学予定日</span><span class="font-medium text-slate-dark">2026/06/30（月）</span>
+                <span class="text-slate/60">事由</span><span>帰国に伴う退学</span>
+              </div>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <section class="bg-white rounded-3xl border border-slate-200/80 shadow-soft p-5 sm:p-6" aria-labelledby="club-heading">
+        <div class="border-b border-slate-100 pb-3 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-1.5 h-6 rounded-full bg-secondary"></div>
+            <h2 id="club-heading" class="text-lg font-bold text-slate-dark">所属クラブ情報</h2>
+          </div>
+          <p class="text-xs text-secondary font-medium mt-1">
+            💡 家庭環境調査票で追加された新しいご家族をクラブに参加させる場合は、詳細画面より登録を行ってください。
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="flex items-center justify-between p-4 bg-slate-light/50 border border-slate-200/40 rounded-2xl">
+            <div>
+              <span class="block font-bold text-slate-dark text-sm">サッカークラブ</span>
+              <span class="text-xs text-slate/70 mt-0.5 block"><i class="fa-regular fa-clock mr-1"></i>毎週2回実施</span>
+            </div>
+            <a href="#" class="px-4 py-2 bg-white hover:bg-slate-light border border-slate-200 rounded-xl text-xs font-bold text-slate-dark transition-all shadow-2xs min-h-[38px]">管理・詳細</a>
+          </div>
+          
+          <div class="flex items-center justify-between p-4 bg-slate-light/50 border border-slate-200/40 rounded-2xl">
+            <div>
+              <span class="block font-bold text-slate-dark text-sm">書道クラブ</span>
+              <span class="text-xs text-slate/70 mt-0.5 block"><i class="fa-regular fa-clock mr-1"></i>書道・硬筆指導</span>
+            </div>
+            <a href="#" class="px-4 py-2 bg-white hover:bg-slate-light border border-slate-200 rounded-xl text-xs font-bold text-slate-dark transition-all shadow-2xs min-h-[38px]">管理・詳細</a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <section class="pt-4" aria-labelledby="faq-heading">
+      <h2 id="faq-heading" class="text-lg font-bold text-slate-dark mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-circle-question text-slate/60"></i> よくあるご質問・ヘルプ
+      </h2>
+      <div class="space-y-3">
+        
+        <details class="faq-item bg-white border border-slate-200 shadow-2xs rounded-2xl transition-all group overflow-hidden">
+          <summary class="px-5 py-4 cursor-pointer font-bold text-slate-dark text-sm list-none flex items-center justify-between gap-3 min-h-[44px] hover:bg-slate-light/40 transition-colors focus:outline-none">
+            <span>Q. ログイン方法がわかりません</span>
+            <span class="w-6 h-6 rounded-lg bg-slate-light flex items-center justify-center text-xs text-slate/60 group-open:rotate-180 transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+          </summary>
+          <div class="px-5 pb-4 text-xs sm:text-sm text-slate leading-relaxed border-t border-slate-100/60 pt-3 bg-slate-light/20">
+            トップの「マイページログイン」ボタンを選択し、学校へ事前に登録申請されている保護者用のメールアドレスを入力してください。メールアドレス宛てに使い切りの認証コードが届きますので、そちらを入力してサインインしてください。届かない場合は迷惑メールフォルダも一度ご確認ください。
+          </div>
+        </details>
+
+        <details class="faq-item bg-white border border-slate-200 shadow-2xs rounded-2xl transition-all group overflow-hidden">
+          <summary class="px-5 py-4 cursor-pointer font-bold text-slate-dark text-sm list-none flex items-center justify-between gap-3 min-h-[44px] hover:bg-slate-light/40 transition-colors focus:outline-none">
+            <span>Q. 欠席連絡のシステム変更は何時まで可能ですか？</span>
+            <span class="w-6 h-6 rounded-lg bg-slate-light flex items-center justify-center text-xs text-slate/60 group-open:rotate-180 transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+          </summary>
+          <div class="px-5 pb-4 text-xs sm:text-sm text-slate leading-relaxed border-t border-slate-100/60 pt-3 bg-slate-light/20">
+            当日の朝 8:05 まで本ポータル上で受付・変更・取消が可能です。それ以降の時間帯における急な変更やご連絡につきましては、お手数ですが学校事務局（代表電話）まで直接お電話にてご連絡いただけますようお願いいたします。
+          </div>
+        </details>
+
+        <details class="faq-item bg-white border border-slate-200 shadow-2xs rounded-2xl transition-all group overflow-hidden">
+          <summary class="px-5 py-4 cursor-pointer font-bold text-slate-dark text-sm list-none flex items-center justify-between gap-3 min-h-[44px] hover:bg-slate-light/40 transition-colors focus:outline-none">
+            <span>Q. スクールバスの運行アプリとデータは連動していますか？</span>
+            <span class="w-6 h-6 rounded-lg bg-slate-light flex items-center justify-center text-xs text-slate/60 group-open:rotate-180 transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+          </summary>
+          <div class="px-5 pb-4 text-xs sm:text-sm text-slate leading-relaxed border-t border-slate-100/60 pt-3 bg-slate-light/20">
+            いいえ、本ポータルサイトとバスアプリの運行データは相互連動しておりません。バスをご利用中の生徒様が欠席・遅刻等される場合は、本サイトでの申請に加えて、必ずバス専用アプリ側でも不乗車（キャンセル）のご登録を別途行ってください。
+          </div>
+        </details>
+
+        <details class="faq-item bg-white border border-slate-200 shadow-2xs rounded-2xl transition-all group overflow-hidden">
+          <summary class="px-5 py-4 cursor-pointer font-bold text-slate-dark text-sm list-none flex items-center justify-between gap-3 min-h-[44px] hover:bg-slate-light/40 transition-colors focus:outline-none">
+            <span>Q. 「編入学願書」の提出と、ログインが必要な機能の違いについて</span>
+            <span class="w-6 h-6 rounded-lg bg-slate-light flex items-center justify-center text-xs text-slate/60 group-open:rotate-180 transition-transform"><i class="fa-solid fa-chevron-down"></i></span>
+          </summary>
+          <div class="px-5 pb-4 text-xs sm:text-sm text-slate leading-relaxed border-t border-slate-100/60 pt-3 bg-slate-light/20">
+            「編入学願書」は新しく本校に入学を希望されるすべての方が対象であるため、ログインなしで誰でも送信可能です。それ以外の欠席連絡や家庭環境調査票、体験通学届などのメニューは、本校に現在籍を置く児童生徒の保護者様のプライバシー保護のため、ログインによるセキュリティ認証を必須としております。
+          </div>
+        </details>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-8 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+      <p class="font-bold text-slate-dark">ハノイ日本人学校 <span class="text-xs font-medium text-slate">| Administration Office</span></p>
+      <p class="text-xs text-slate/80">お手続きに関してご不明な点がございましたら、学校事務局までお気軽にお問い合わせください。</p>
+      <p class="text-[11px] text-slate/40 max-w-md mx-auto pt-3 border-t border-slate-100">
+        ※ 本ページは操作性・UX改善検討のためのプロトタイプデモ画面です。配置されている各パーツのハイパーリンクは機能いたしません。
+      </p>
+    </div>
+  </footer>
+
+  <div class="fixed bottom-0 inset-x-0 z-40 sm:hidden bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-lg safe-area-pb">
+    <div class="flex gap-2.5 p-3">
+      
+      <a href="#service-leave" class="logged-in-only-flex flex-1 items-center justify-center gap-1.5 px-3 py-3 bg-danger text-white rounded-xl font-bold text-xs shadow-sm min-h-[44px] active:scale-95 transition-transform">
+        <i class="fa-regular fa-bell"></i>欠席・遅刻連絡
+      </a>
+      
+      <a href="#login-banner" class="logged-out-only-flex flex-1 items-center justify-center gap-1.5 px-3 py-3 bg-primary text-white rounded-xl font-bold text-xs shadow-sm min-h-[44px] active:scale-95 transition-transform">
+        <i class="fa-solid fa-right-to-bracket"></i>ログイン
+      </a>
+      
+      <a href="#service-transfer" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-3 bg-slate-light border border-slate-200 text-slate-dark rounded-xl font-bold text-xs min-h-[44px] active:scale-95 transition-transform">
+        <i class="fa-solid fa-file-signature"></i>編入学願書
+      </a>
+    </div>
+  </div>
+
+  <div id="modal-temp" class="modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center bg-slate-dark/60 backdrop-blur-xs p-0 sm:p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="modal-temp-title">
+    <div class="bg-white w-full sm:max-w-md sm:rounded-2xl shadow-xl max-h-[85dvh] flex flex-col transform transition-all">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-plane-departure text-teal-600"></i>
+          <h2 id="modal-temp-title" class="font-bold text-slate-dark text-base">体験通学届 詳細</h2>
+        </div>
+        <button type="button" class="modal-close p-2 text-slate/40 hover:text-slate rounded-lg text-sm min-h-[44px] min-w-[44px]" aria-label="閉じる">✕</button>
+      </div>
+      <div class="overflow-y-auto flex-1 px-5 py-4 space-y-3.5 text-sm">
+        <div class="flex items-center gap-2 bg-slate-light p-2.5 rounded-xl">
+          <span class="text-xs font-bold text-slate">進捗ステータス:</span>
+          <span class="px-2 py-0.5 text-xs font-bold bg-amber-500 text-white rounded">審査中</span>
+        </div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">申請保護者</p><p class="font-bold text-slate-dark col-span-2">山田　花子</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">対象児童生徒</p><p class="font-bold text-slate-dark col-span-2">山田 太郎</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">届出年月日</p><p class="text-slate-dark col-span-2">2026/05/10（土）</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">通学希望期間</p><p class="font-bold text-slate-dark col-span-2">2026/07/01 〜 2026/08/15</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">体験希望学校</p><p class="text-slate-dark col-span-2">東京日本人学校</p></div>
+        <div class="space-y-1"><p class="text-xs text-slate font-medium">申請事由</p><p class="text-slate-dark p-2.5 bg-slate-light/40 rounded-xl text-xs">夏季の日本一時帰国スケジュールに合わせ、本期間のみ現地の日本の小学校への体験通学を希望するため。</p></div>
+      </div>
+      <div class="px-5 py-3 border-t border-slate-100 bg-slate-light/20">
+        <button type="button" class="modal-close w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-dark hover:bg-slate-light rounded-xl font-bold text-xs transition-all min-h-[44px]">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-taigaku" class="modal hidden fixed inset-0 z-50 items-end sm:items-center justify-center bg-slate-dark/60 backdrop-blur-xs p-0 sm:p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="modal-taigaku-title">
+    <div class="bg-white w-full sm:max-w-md sm:rounded-2xl shadow-xl max-h-[85dvh] flex flex-col transform transition-all">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-user-minus text-slate-600"></i>
+          <h2 id="modal-taigaku-title" class="font-bold text-slate-dark text-base">退学届の詳細</h2>
+        </div>
+        <button type="button" class="modal-close p-2 text-slate/40 hover:text-slate rounded-lg text-sm min-h-[44px] min-w-[44px]" aria-label="閉じる">✕</button>
+      </div>
+      <div class="overflow-y-auto flex-1 px-5 py-4 space-y-3.5 text-sm">
+        <div class="flex items-center gap-2 bg-slate-light p-2.5 rounded-xl">
+          <span class="text-xs font-bold text-slate">進捗ステータス:</span>
+          <span class="px-2 py-0.5 text-xs font-bold bg-secondary text-white rounded">未確認</span>
+        </div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">申請保護者</p><p class="font-bold text-slate-dark col-span-2">山田　花子</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">対象児童生徒</p><p class="font-bold text-slate-dark col-span-2">山田 次郎</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">届出年月日</p><p class="text-slate-dark col-span-2">2026/05/15（木）</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">退学（予定）日</p><p class="font-bold text-danger col-span-2">2026/06/30（月）</p></div>
+        <div class="grid grid-cols-3 border-b border-slate-100 pb-2"><p class="text-xs text-slate font-medium">転出先情報</p><p class="text-slate-dark col-span-2">日本国内の公立小学校</p></div>
+        <div class="space-y-1"><p class="text-xs text-slate font-medium">申請事由</p><p class="text-slate-dark p-2.5 bg-slate-light/40 rounded-xl text-xs">日本への転勤・帰国に伴う退学手続き。</p></div>
+        <p class="text-xs text-danger font-bold bg-danger-light/30 p-2.5 rounded-xl border border-danger/10">
+          ⚠️ 書類の受理状況や持ち物等の不明点は、ポータル上で変更せず学校事務局までお電話にて直接ご確認ください。
+        </p>
+      </div>
+      <div class="px-5 py-3 border-t border-slate-100 bg-slate-light/20">
+        <button type="button" class="modal-close w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-dark hover:bg-slate-light rounded-xl font-bold text-xs transition-all min-h-[44px]">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const btnOut = document.getElementById('btn-logged-out');
+      const btnIn = document.getElementById('btn-logged-in');
+
+      function setLoginState(loggedIn) {
+        body.classList.toggle('is-logged-in', loggedIn);
+        btnOut.setAttribute('aria-pressed', String(!loggedIn));
+        btnIn.setAttribute('aria-pressed', String(loggedIn));
+        
+        // Dynamic design active classes swapping logic safely adapted to the utility palette
+        if (!loggedIn) {
+          btnOut.className = "demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px] bg-white text-charcoal shadow-sm";
+          btnIn.className = "demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px] text-white/70 hover:text-white";
+        } else {
+          btnOut.className = "demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px] text-white/70 hover:text-white";
+          btnIn.className = "demo-toggle px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-300 min-h-[36px] bg-white text-charcoal shadow-sm";
+        }
+      }
+
+      btnOut.addEventListener('click', () => setLoginState(false));
+      btnIn.addEventListener('click', () => setLoginState(true));
+      setLoginState(false);
+
+      // User dropdown controller logic preserved
+      const userMenuBtn = document.getElementById('user-menu-btn');
+      const userMenu = document.getElementById('user-menu');
+      if (userMenuBtn && userMenu) {
+        userMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = !userMenu.classList.contains('hidden');
+          userMenu.classList.toggle('hidden', open);
+          userMenuBtn.setAttribute('aria-expanded', String(!open));
+        });
+        document.addEventListener('click', () => {
+          userMenu.classList.add('hidden');
+          userMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      // Smooth scroll triggers logic mapping
+      document.querySelectorAll('.scenario-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const target = document.getElementById(chip.dataset.target);
+          if (!target) return;
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.classList.remove('card-highlight');
+          void target.offsetWidth; // Trigger layout engine forced redraw
+          target.classList.add('card-highlight');
+        });
+      });
+
+      // Unified Dynamic filter strategy logic safely adapted
+      const leaveItems = document.querySelectorAll('.leave-item');
+      const tabGroup = document.querySelectorAll('.student-tab');
+      
+      function setTabActiveState(activeTab) {
+        tabGroup.forEach((t) => {
+          t.className = "student-tab px-4 py-1.5 rounded-xl border text-xs font-bold tracking-wide shadow-2xs transition-all duration-200 min-h-[36px] border-slate-200 text-slate bg-white hover:bg-slate-light";
+        });
+        activeTab.className = "student-tab px-4 py-1.5 rounded-xl border text-xs font-bold tracking-wide shadow-2xs transition-all duration-200 min-h-[36px] bg-danger border-danger text-white";
+      }
+
+      tabGroup.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          setTabActiveState(tab);
+          const student = tab.dataset.student;
+          leaveItems.forEach((item) => {
+            item.style.display = student === 'all' || item.dataset.student === student ? '' : 'none';
+          });
+        });
+      });
+      if(tabGroup.length > 0) setTabActiveState(tabGroup[0]);
+
+      // Control simulation interface logic unchanged
+      const monthSelect = document.getElementById('month-select');
+      const monthPrev = document.getElementById('month-prev');
+      const monthNext = document.getElementById('month-next');
+      if (monthSelect && monthPrev && monthNext) {
+        monthPrev.addEventListener('click', () => {
+          if (monthSelect.selectedIndex < monthSelect.options.length - 1) {
+            monthSelect.selectedIndex += 1;
+          }
+        });
+        monthNext.addEventListener('click', () => {
+          if (monthSelect.selectedIndex > 0) {
+            monthSelect.selectedIndex -= 1;
+          }
+        });
+      }
+
+      // Structural Modal view manipulation logic layer preserved
+      document.querySelectorAll('.modal-trigger').forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          const modal = document.getElementById(trigger.dataset.modal);
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      });
+
+      function closeModal(modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (!document.querySelector('.modal.flex')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      document.querySelectorAll('.modal').forEach((modal) => {
+        modal.querySelectorAll('.modal-close').forEach((btn) => {
+          btn.addEventListener('click', () => closeModal(modal));
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal(modal);
+        });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.modal.flex').forEach(closeModal);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
